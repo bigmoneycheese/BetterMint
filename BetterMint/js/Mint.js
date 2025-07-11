@@ -1497,7 +1497,7 @@ class BetterMint {
         id: "chess.com",
         duration: 3000,
         icon: "circle-info",
-        content: `Unofficial Mint V2.1 is enabled!`,
+        content: `Mint V2.0 is enabled!`,
       });
     }
   }
