@@ -85,6 +85,18 @@ let inputObjects = {
   "option-evaluation-bar": {
     default_value: true,
   },
+  "option-auto-queue": {
+    default_value: false,
+  },
+  "option-panic-mode": {
+    default_value: false,
+  },
+  "option-panic-time": {
+    default_value: 10,
+  },
+  "option-notifications": {
+    default_value: true,
+  },
 };
 
 let DefaultExtensionOptions = {};

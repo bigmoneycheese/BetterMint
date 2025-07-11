@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>Mint V2 Internal</title>
+    <title>Unofficial Mint V2.1</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Exo 2">
     <link href='https://fonts.googleapis.com/css?family=Comfortaa' rel='stylesheet'>
     <link rel="stylesheet" type="text/css" href="../css/options.css">
@@ -224,7 +224,7 @@
 <body>
     <div class="header-logo">
         <img src="../img/betterlogo.png">
-        <span class="title">Mint V2 Internal</span>
+        <span class="title">Unofficial Mint V2.1 Internal</span>
         <?xml version="1.0" encoding="utf-8"?>
         <svg id="popoutb" viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
             <path
@@ -345,6 +345,19 @@
             </label>
         </div>
         <div class="options-checkbox">
+            <input id="option-notifications" type="checkbox" />
+            <label for="option-notifications">Notifications
+                <div class="tooltip">
+                    <span class="material-icons" style="color: #777777; font-size: 20px !important;">help</span>
+                    <span class="tooltiptext">Enable or disable on-screen toast notifications.</span>
+                </div>
+            </label>
+        </div>
+        <div class="options-checkbox">
+            <input id="option-auto-queue" type="checkbox" />
+            <label for="option-auto-queue">Auto Queue</label>
+        </div>
+        <div class="options-checkbox">
             <input id="option-highmatechance" type="checkbox" />
             <label for="option-highmatechance">Mate Finder
                 <div class="tooltip">
@@ -388,6 +401,21 @@
         <div class="options-slider" data-min="0" data-max="100">
             <div class="title">Best Move Chance:</div>
             <input id="option-best-move-chance" type="range" value="30" />
+        </div>
+
+        <!-- Panic Mode (requires Auto Move) -->
+        <div class="options-checkbox">
+            <input id="option-panic-mode" type="checkbox" />
+            <label for="option-panic-mode">Panic Mode (requires Auto Move)
+                <div class="tooltip">
+                    <span class="material-icons" style="color: #777777; font-size: 20px !important;">help</span>
+                    <span class="tooltiptext">Simulates the final seconds of a game by instantly playing depth-1 moves (0–0.6 s) to win on time.</span>
+                </div>
+            </label>
+        </div>
+        <div class="options-slider" data-min="1" data-max="60">
+            <div class="title">Panic Threshold (seconds):</div>
+            <input id="option-panic-time" type="range" value="10" />
         </div>
 
         <div class=" options-slider" data-min="-30000" data-max="30000">
@@ -554,11 +582,11 @@
             <button id="lmc" class="button">Got It!</button>
         </div>
     </div>
-    <div id="bottomofsomet"><span style="color: greenyellow;">BetterMint v2.0</span>
+    <div id="bottomofsomet"><span style="color: greenyellow;">BetterMint v2.1</span>
         <div class="privateicon"><span>Public</span></div>
     </div>
     <br>
-    <span class="credits">by BetterMint, HotaVN, lucaskvasirr, Webcubed, & thedemons</span>
+    <span class="credits">by BetterMint, HotaVN, lucaskvasirr, Webcubed, & thedemons. Updated by .baconater69.</span>
     <br>
 </body>
 
