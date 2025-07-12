@@ -130,6 +130,10 @@ var enumOptions = {
   PanicMode: "option-panic-mode",
   PanicTime: "option-panic-time",
   Notifications: "option-notifications",
+  FastOpeningMoves: "option-fast-opening-moves",
+  FastOpeningSpeed: "option-fast-opening-speed",
+  InstantPremove: "option-instant-premove",
+  InstantPremoveKey: "option-instant-premove-key",
 };
 
 // helper to parse remaining time for current player
@@ -213,7 +217,7 @@ class GameController {
           console.log("WHITE'S FIRST MOVE - INITIATING PRE-MOVES");
         }
       }
-      
+
       this.UpdateEngine(false);
     });
     // check if a new game has started
@@ -598,7 +602,7 @@ function getVerboseMove(move, fen) {
         const capturedPieceName = pieceNames[capturedPiece.toLowerCase()];
         verboseMove = `${pieceName} takes ${capturedPieceName} on ${move.to}`;
     }
-    
+
     // basic castling detection
     if (piece.toLowerCase() === 'k') {
         const fromFile = move.from.charCodeAt(0);
@@ -608,7 +612,7 @@ function getVerboseMove(move, fen) {
             else return "castles queenside";
         }
     }
-    
+
     // en passant detection
     if (piece.toLowerCase() === 'p' && !capturedPiece && move.from.charAt(0) !== move.to.charAt(0)) {
          verboseMove = `pawn takes on ${move.to}`;
@@ -810,7 +814,7 @@ class StockfishEngine {
       callback();
     }
   }
-  
+
   onStockfishResponse() {
     if (this.isRequestedStop) {
       this.isRequestedStop = false;
@@ -871,7 +875,7 @@ class StockfishEngine {
   ProcessMessage(event) {
     this.ready = false;
     let line = event && typeof event === "object" ? event.data : event;
-  
+
     if (line === "uciok") {
       this.loaded = true;
       this.BetterMintmaster.onEngineLoaded();
@@ -902,7 +906,7 @@ class StockfishEngine {
       let pvMatch = line.match(/^info .*?pv ([a-h][1-8][a-h][1-8][qrbn]?(?: [a-h][1-8][a-h][1-8][qrbn]?)*)(?: .*)?/);
       let multipvMatch = line.match(/^info .*?multipv (\d+)/);
       let bestMoveMatch = line.match(/^bestmove ([a-h][1-8][a-h][1-8][qrbn]?)(?: ponder ([a-h][1-8][a-h][1-8][qrbn]?))?/);
-  
+
       if (depthMatch && scoreMatch && pvMatch) {
         let depth = parseInt(depthMatch[1]);
         let seldepth = seldepthMatch ? parseInt(seldepthMatch[1]) : null;
@@ -911,10 +915,10 @@ class StockfishEngine {
         let score = parseInt(scoreMatch[2]);
         let multipv = multipvMatch ? parseInt(multipvMatch[1]) : 1;
         let pv = pvMatch[1];
-  
+
         let cpScore = scoreType === "cp" ? score : null;
         let mateScore = scoreType === "mate" ? score : null;
-  
+
         if (!this.isRequestedStop) {
           let move = new TopMove(pv, depth, cpScore, mateScore, multipv);
           this.onTopMoves(move, false);
@@ -932,7 +936,7 @@ class StockfishEngine {
           const bestMove = bestMoveMatch[1];
           const ponderMove = bestMoveMatch[2];
           const index = this.topMoves.findIndex((object) => object.move === bestMove);
-  
+
           if (index < 0) {
             console.warn(`The engine returned the best move "${bestMove}" but it's not in the top move list.`);
             let bestMoveOnTop = new TopMove(
@@ -949,7 +953,7 @@ class StockfishEngine {
         this.isRequestedStop = false;
       }
     }
-  }  
+  }
 
   executeReadyCallbacks() {
     while (this.readyCallbacks.length > 0) {
@@ -1097,18 +1101,31 @@ class StockfishEngine {
             }
         }
     }
-    if (bestMoveSelected && this.topMoves.length > 0) {
+    if (this.BetterMintmaster && this.BetterMintmaster.instantPremoveActive && bestMoveSelected) {
+      const bestMove = this.topMoves[0];
+      const legalMoves = this.BetterMintmaster.game.controller.getLegalMoves();
+      const moveData = legalMoves.find(m=>m.from===bestMove.from && m.to===bestMove.to);
+      if (moveData) {
+        moveData.userGenerated=true;
+        if(bestMove.promotion) moveData.promotion=bestMove.promotion;
+        this.BetterMintmaster.instantPremoveActive=false;
+        this.BetterMintmaster.game.controller.move(moveData);
+        return;
+      }
+    }
+
+    if (bestMoveSelected) {
       const bestMove = this.topMoves[0];
       const currentFEN = this.BetterMintmaster.game.controller.getFEN();
       const currentTurn = currentFEN.split(" ")[1]; // 'w' or 'b'
       const playingAs = this.BetterMintmaster.game.controller.getPlayingAs();
-    
+
       if (getValueConfig(enumOptions.Premove) && getValueConfig(enumOptions.LegitAutoMove)) {
         // [FIX] Execute pre-moves if:
         // - It's player's turn AND
         // - Haven't reached move limit
         if (
-          ((playingAs === 1 && currentTurn === 'w') || 
+          ((playingAs === 1 && currentTurn === 'w') ||
            (playingAs === 2 && currentTurn === 'b')) &&
           this.moveCounter < getValueConfig(enumOptions.MaxPreMoves) && // Use move counter instead of premove depth
           !this.hasShownLimitMessage
@@ -1117,16 +1134,16 @@ class StockfishEngine {
           const moveData = legalMoves.find(
             move => move.from === bestMove.from && move.to === bestMove.to
           );
-    
+
           if (moveData) {
             moveData.userGenerated = true;
-    
+
             if (bestMove.promotion !== null) {
               moveData.promotion = bestMove.promotion;
             }
-    
+
             this.moveCounter++; // Increment move counter
-    
+
             // Calculate pre-move execution time
             let pre_move_time =
               getValueConfig(enumOptions.PreMoveTime) +
@@ -1135,10 +1152,10 @@ class StockfishEngine {
               ) %
                 getValueConfig(enumOptions.PreMoveTimeRandomDiv)) *
                 getValueConfig(enumOptions.PreMoveTimeRandomMulti);
-    
+
             setTimeout(() => {
               this.BetterMintmaster.game.controller.move(moveData);
-    
+
               if (getValueConfig(enumOptions.Notifications) && window.toaster) {
                 window.toaster.add({
                   id: "auto-move-counter",
@@ -1154,7 +1171,7 @@ class StockfishEngine {
                   }
                 });
               }
-    
+
               if (this.moveCounter >= getValueConfig(enumOptions.MaxPreMoves)) {
                 if (getValueConfig(enumOptions.Notifications) && window.toaster) {
                   window.toaster.add({
@@ -1176,21 +1193,21 @@ class StockfishEngine {
             }, pre_move_time); // Execute with calculated delay
           }
         }
-    
+
         // Check for mate in 3 or less - MOVED INSIDE THE PREMOVE CHECK
         if (bestMove.mate !== null && bestMove.mate > 0 && bestMove.mate <= getValueConfig(enumOptions.MateFinderValue)) {
           const legalMoves = this.BetterMintmaster.game.controller.getLegalMoves();
           const moveData = legalMoves.find(
             move => move.from === bestMove.from && move.to === bestMove.to
           );
-    
+
           if (moveData) {
             moveData.userGenerated = true;
-    
+
             if (bestMove.promotion !== null) {
               moveData.promotion = bestMove.promotion;
             }
-    
+
             if (getValueConfig(enumOptions.Notifications) && window.toaster) {
               window.toaster.add({
                 id: "premove-mate",
@@ -1207,13 +1224,13 @@ class StockfishEngine {
                 },
               });
             }
-    
+
             this.BetterMintmaster.game.controller.move(moveData);
           }
         }
       }
     }
-    
+
     if (getValueConfig(enumOptions.TextToSpeech)) {
       const topMove = this.topMoves[0]; // Select the top move from the PV list
       const currentFEN = this.BetterMintmaster.game.controller.getFEN();
@@ -1396,6 +1413,24 @@ class StockfishEngine {
             getValueConfig(enumOptions.AutoMoveTimeRandomDiv)) *
             getValueConfig(enumOptions.AutoMoveTimeRandomMulti);
       }
+
+      if (this.BetterMintmaster && this.BetterMintmaster.instantPremoveActive) {
+        auto_move_time = 0;
+        this.BetterMintmaster.instantPremoveActive = false;
+      }
+
+      if (getValueConfig(enumOptions.FastOpeningMoves)) {
+        const fenParts = this.BetterMintmaster.game.controller.getFEN().split(" ");
+        const fullMoveNumber = parseInt(fenParts[5], 10) || 1;
+        if (fullMoveNumber <= 7) {
+          const speedPercentage = parseInt(getValueConfig(enumOptions.FastOpeningSpeed), 10);
+          const speedMultiplier = 1 + (speedPercentage * 2) / 100;
+          if (speedMultiplier > 0) {
+            auto_move_time /= speedMultiplier;
+          }
+        }
+      }
+
       if (
         isNaN(auto_move_time) ||
         auto_move_time === null ||
@@ -1490,6 +1525,23 @@ class BetterMint {
       },
       false
     );
+    this.instantPremoveActive = false;
+    document.addEventListener('keydown', (e) => {
+      if (!getValueConfig(enumOptions.InstantPremove)) return;
+      const cfgKey = (getValueConfig(enumOptions.InstantPremoveKey) || 'P').toLowerCase();
+      if (e.key.toLowerCase() === cfgKey) {
+        this.instantPremoveActive = true;
+        if (getValueConfig(enumOptions.Notifications) && window.toaster) {
+          window.toaster.add({
+            id: 'instant-premove-armed',
+            duration: 1500,
+            icon: 'circle-lightning',
+            content: `Instant Premove armed (key '${cfgKey.toUpperCase()}') for next move!`,
+            style: {position:'fixed',bottom:'120px',right:'30px',backgroundColor:'#5d3fd3',color:'white'}
+          });
+        }
+      }
+    });
   }
   onEngineLoaded() {
     if (getValueConfig(enumOptions.Notifications) && window.toaster) {

@@ -353,10 +353,25 @@
                 </div>
             </label>
         </div>
+
         <div class="options-checkbox">
-            <input id="option-auto-queue" type="checkbox" />
-            <label for="option-auto-queue">Auto Queue</label>
+            <input id="option-instant-premove" type="checkbox" />
+            <label for="option-instant-premove">Instant Premove
+                <div class="tooltip">
+                    <span class="material-icons" style="color:#777777;font-size:20px!important;">help</span>
+                    <span class="tooltiptext">Press the key to arm; the next move is played instantly (0 sec).</span>
+                </div>
+            </label>
         </div>
+        <div class="options-slider" style="margin-bottom:30px;">
+            <div class="title" style="text-transform: uppercase; font-weight:bold;">Activation Key:</div>
+            <input id="option-instant-premove-key" type="text" maxlength="1" style="width: 60px; padding: 6px 8px; color: white; background-color: #3a3a3d; border-radius:4px; border: 1px solid #555; text-align:center;" />
+        </div>
+
+         <div class="options-checkbox">
+             <input id="option-auto-queue" type="checkbox" />
+             <label for="option-auto-queue">Auto Queue</label>
+         </div>
         <div class="options-checkbox">
             <input id="option-highmatechance" type="checkbox" />
             <label for="option-highmatechance">Mate Finder
@@ -386,6 +401,20 @@
                     </span>
                 </div>
             </label>
+        </div>
+
+        <div class="options-checkbox">
+            <input id="option-fast-opening-moves" type="checkbox" />
+            <label for="option-fast-opening-moves">Fast Opening Moves
+                <div class="tooltip">
+                    <span class="material-icons" style="color: #777777; font-size: 20px !important;">help</span>
+                    <span class="tooltiptext">Play opening moves faster to save time.</span>
+                </div>
+            </label>
+        </div>
+        <div class="options-slider" data-min="1" data-max="100">
+            <div class="title">Opening Move Speed (% Faster):</div>
+            <input id="option-fast-opening-speed" type="range" value="50" />
         </div>
 
         <div class="options-checkbox">
